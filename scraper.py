@@ -1,11 +1,15 @@
 import requests
 import random
+import csv
 from bs4 import BeautifulSoup as bs
 
 # Wikipedia requires a proper User-Agent header
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 }
+
+# Store results
+results = []
 
 def scrapeWikiArticle(url, depth=0, max_depth=5):
     if depth > max_depth:
@@ -27,7 +31,11 @@ def scrapeWikiArticle(url, depth=0, max_depth=5):
     title = soup.find(id='firstHeading')
     if not title:
         title = soup.find('h1')
-    print("Title:", title.text if title else "No title found")
+    title_text = title.text if title else "No title found"
+    print("Title:", title_text)
+    
+    # Store result
+    results.append({'url': url, 'title': title_text, 'depth': depth})
 
     # Find main content area (mw-parser-output is the current class)
     content = soup.find('div', {'class': 'mw-parser-output'})
@@ -51,3 +59,14 @@ def scrapeWikiArticle(url, depth=0, max_depth=5):
             break
 
 scrapeWikiArticle("https://en.wikipedia.org/wiki/Web_scraping")
+
+# Write results to CSV file
+if results:
+    with open('scraper_results.csv', 'w', newline='', encoding='utf-8') as csvfile:
+        fieldnames = ['url', 'title', 'depth']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(results)
+    print(f"\nResults saved to scraper_results.csv ({len(results)} articles)")
+else:
+    print("No results to save.")
